@@ -14,10 +14,19 @@ var (
         },
         []string{"method", "status"},
     )
+
+    ResponseStatus = prometheus.NewCounterVec(
+        prometheus.CounterOpts{
+            Name: "response_status",
+            Help: "Status of HTTP responses",
+        },
+        []string{"status"},
+    )
 )
 
 func Init() {
     prometheus.MustRegister(RequestCounter)
+    prometheus.MustRegister(ResponseStatus)
 }
 
 func Handler() http.Handler {
