@@ -5,11 +5,17 @@ import (
     "github.com/jackc/pgx/v4/pgxpool"
     "net/http"
     "go-crud-app/models"
-	"fmt"
+    "go-crud-app/metrics"
+    "fmt"
 )
 
 func SetupRouter(db *pgxpool.Pool) *gin.Engine {
     router := gin.Default()
+
+    router.Use(func(c *gin.Context) {
+        c.Next()
+        metrics.RequestCounter.WithLabelValues(c.Request.Method, fmt.Sprint(c.Writer.Status())).Inc()
+    })
 
     router.POST("/users", func(c *gin.Context) {
         var user models.User
@@ -17,29 +23,29 @@ func SetupRouter(db *pgxpool.Pool) *gin.Engine {
             c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
             return
         }
-        
+
         if err := models.ValidateUser(&user); err != nil {
             c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
             return
         }
 
-		var existingUser models.User
-		err := db.QueryRow(c, "SELECT id, name, email FROM users WHERE email = $1", user.Email).Scan(&existingUser.ID, &existingUser.Name, &existingUser.Email)
-		if err == nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "User with this email already exists"})
-			return
-		} else if err.Error() != "no rows in result set" {
-			fmt.Println("err:", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Check failed"})
-			return
-		}
+        var existingUser models.User
+        err := db.QueryRow(c, "SELECT id, name, email FROM users WHERE email = $1", user.Email).Scan(&existingUser.ID, &existingUser.Name, &existingUser.Email)
+        if err == nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "User with this email already exists"})
+            return
+        } else if err.Error() != "no rows in result set" {
+            fmt.Println("err:", err)
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Check failed"})
+            return
+        }
 
         err = db.QueryRow(c, "INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id", user.Name, user.Email).Scan(&user.ID)
         if err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create user"})
             return
         }
-        
+
         c.JSON(http.StatusCreated, user)
     })
 
@@ -55,7 +61,7 @@ func SetupRouter(db *pgxpool.Pool) *gin.Engine {
             }
             return
         }
-        
+
         c.JSON(http.StatusOK, user)
     })
 
@@ -87,7 +93,7 @@ func SetupRouter(db *pgxpool.Pool) *gin.Engine {
             c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
             return
         }
-        
+
         if err := models.ValidateUser(&user); err != nil {
             c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
             return
@@ -98,15 +104,14 @@ func SetupRouter(db *pgxpool.Pool) *gin.Engine {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update user"})
             return
         }
-        
+
         c.JSON(http.StatusOK, user)
     })
 
     router.DELETE("/users/:id", func(c *gin.Context) {
         id := c.Param("id")
 
-		_, err := db.Exec(c, "DELETE FROM users WHERE id = $1", id)
-
+        _, err := db.Exec(c, "DELETE FROM users WHERE id = $1", id)
         if err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not delete user"})
             return
