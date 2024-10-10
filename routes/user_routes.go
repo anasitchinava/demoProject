@@ -13,9 +13,11 @@ func SetupRouter(db *pgxpool.Pool) *gin.Engine {
     router := gin.Default()
 
     router.Use(func(c *gin.Context) {
-        c.Next()
-        metrics.RequestCounter.WithLabelValues(c.Request.Method, fmt.Sprint(c.Writer.Status())).Inc()
-    })
+		c.Next()
+		status := fmt.Sprint(c.Writer.Status())
+		metrics.RequestCounter.WithLabelValues(c.Request.Method, status).Inc()
+		metrics.ResponseStatus.WithLabelValues(status).Inc()
+	})
 
     router.POST("/users", func(c *gin.Context) {
         var user models.User
