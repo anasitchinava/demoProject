@@ -13,5 +13,5 @@ func main() {
     // Set up the router
     router := routes.SetupRouter(db)
 
-    log.Fatal(router.Run(":8080"))
+    log.Fatal(router.Run("localhost:8080"))
 }
