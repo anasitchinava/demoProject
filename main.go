@@ -5,7 +5,6 @@ import (
     "go-crud-app/routes"
     "go-crud-app/metrics"
     "log"
-    "github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -14,10 +13,18 @@ func main() {
 
     metrics.Init()
 
-	// Set up the router
+    // Set up the router
     router := routes.SetupRouter(db)
 
-    router.GET("/metrics", gin.WrapH(metrics.Handler()))
+    // Apply metrics middleware
+    router.Use(metrics.MetricsMiddleware())
 
-    log.Fatal(router.Run("localhost:8080"))
+    router.GET("/metrics", metrics.Handler())
+
+    // Start the server
+    if err := router.Run(":8080"); err != nil {
+        log.Fatalf("Failed to run server: %v", err)
+    }
+
+    log.Println("Server running on :8080")
 }
