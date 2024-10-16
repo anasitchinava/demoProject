@@ -5,13 +5,13 @@ import (
     "github.com/jackc/pgx/v4/pgxpool"
     "net/http"
     "go-crud-app/models"
-    // "go-crud-app/metrics"
+    "go-crud-app/metrics"
     "fmt"
 )
 
 func SetupRouter(db *pgxpool.Pool) *gin.Engine {
     router := gin.Default()
-    // router.Use(metrics.MetricsMiddleware())
+    router.Use(metrics.MetricsMiddleware())
 
     // router.Use(func(c *gin.Context) {
 	// 	c.Next()
