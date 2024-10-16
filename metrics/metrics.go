@@ -17,9 +17,9 @@ var (
     RequestCounter = prometheus.NewCounterVec(
         prometheus.CounterOpts{
             Name: "http_requests_total",
-            Help: "Total number of HTTP requests",
+            Help: "Number of get requests.",
         },
-        []string{"method", "status"},
+        []string{"path"},
     )
 
     ResponseStatus = prometheus.NewCounterVec(
@@ -33,8 +33,8 @@ var (
     ResponseDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
         Name:    "http_response_time_seconds",
         Help:    "Duration of HTTP requests.",
-        Buckets: prometheus.DefBuckets,
-    }, []string{"path", "method"})
+        // Buckets: prometheus.DefBuckets,
+    }, []string{"path"})
 
     mu          sync.Mutex
     initialized bool
@@ -69,9 +69,9 @@ func MetricsMiddleware() gin.HandlerFunc {
 
         duration := time.Since(start).Seconds()
         path := c.Request.URL.Path
-        method := c.Request.Method
+        // method := c.Request.Method
 
-        ResponseDuration.WithLabelValues(path, method).Observe(duration)
+        ResponseDuration.WithLabelValues(path).Observe(duration)
 
         status := c.Writer.Status()
 
