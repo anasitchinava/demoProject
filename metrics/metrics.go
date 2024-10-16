@@ -69,11 +69,10 @@ func MetricsMiddleware() gin.HandlerFunc {
 
         duration := time.Since(start).Seconds()
         path := c.Request.URL.Path
+        status := c.Writer.Status()
         // method := c.Request.Method
 
         ResponseDuration.WithLabelValues(path).Observe(duration)
-
-        status := c.Writer.Status()
 
         RequestCounter.WithLabelValues(path).Inc()
         ResponseStatus.WithLabelValues(strconv.Itoa(status)).Inc()
