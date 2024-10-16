@@ -2,7 +2,7 @@ package metrics
 
 import (
     "log"
-    "net/http"
+    // "net/http"
     "sync"
     "time"
 
@@ -10,6 +10,7 @@ import (
     "github.com/prometheus/client_golang/prometheus/promhttp"
     "github.com/prometheus/client_golang/prometheus/promauto"
     "github.com/gin-gonic/gin"
+    "strconv"
 )
 
 var (
@@ -67,11 +68,15 @@ func MetricsMiddleware() gin.HandlerFunc {
         c.Next()
 
         duration := time.Since(start).Seconds()
-        ResponseDuration.WithLabelValues(c.Request.URL.Path, c.Request.Method).Observe(duration)
+        path := c.Request.URL.Path
+        method := c.Request.Method
+
+        ResponseDuration.WithLabelValues(path, method).Observe(duration)
 
         status := c.Writer.Status()
-        RequestCounter.WithLabelValues(c.Request.Method, http.StatusText(status)).Inc()
-        ResponseStatus.WithLabelValues(http.StatusText(status)).Inc()
+
+        RequestCounter.WithLabelValues(path).Inc()
+        ResponseStatus.WithLabelValues(strconv.Itoa(status)).Inc()
     }
 }
 
