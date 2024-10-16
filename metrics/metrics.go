@@ -27,7 +27,7 @@ var (
             Name: "response_status",
             Help: "Status of HTTP responses",
         },
-        []string{"status"},
+        []string{"status", "path"},
     )
 
     ResponseDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
@@ -76,7 +76,7 @@ func MetricsMiddleware() gin.HandlerFunc {
         status := c.Writer.Status()
 
         RequestCounter.WithLabelValues(path).Inc()
-        ResponseStatus.WithLabelValues(strconv.Itoa(status)).Inc()
+        ResponseStatus.WithLabelValues(strconv.Itoa(status), path).Inc()
     }
 }
 
